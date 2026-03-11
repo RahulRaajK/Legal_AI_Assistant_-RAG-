@@ -1,0 +1,226 @@
+# LegalRAG v2.0 — Complete Legal Practice Management + AI Platform
+
+Transform the current legal search tool into a **role-based AI assistant** with case management, client management, and intelligent legal analysis — **100% free, Ollama-powered**.
+
+## User Review Required
+
+> [!IMPORTANT]
+> This is a significant redesign. The current single-pane chat interface will become a **multi-dashboard application** with three distinct role-based views. All existing RAG and search functionality is preserved and enhanced.
+
+> [!WARNING]
+> Files to be **deleted**: [implementation_plan.md.resolved](file:///c:/Users/ROG/Downloads/legal_ai_assistant/implementation_plan.md.resolved), [walkthrough.md.resolved](file:///c:/Users/ROG/Downloads/legal_ai_assistant/walkthrough.md.resolved), [tests/test_output.txt](file:///c:/Users/ROG/Downloads/legal_ai_assistant/tests/test_output.txt) — these are stale artifacts from the initial build.
+
+---
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Frontend["Frontend — Role-Based Dashboards"]
+        LP[Login/Role Selector]
+        JD[Judge Dashboard]
+        AD[Advocate Dashboard]
+        PD[Public Dashboard]
+    end
+    
+    subgraph Backend["FastAPI Backend"]
+        API[API Routes]
+        RAG[RAG Engine]
+        CM[Case Manager]
+        CLM[Client Manager]
+    end
+    
+    subgraph Storage["Local Storage — 100% Free"]
+        VS[(ChromaDB Vectors)]
+        DB[(SQLite DB)]
+        FS[File Storage]
+    end
+    
+    subgraph AI["Local AI — Ollama"]
+        LLM[Mistral / LLaMA]
+        EMB[Sentence Transformer]
+    end
+    
+    LP --> JD & AD & PD
+    JD & AD & PD --> API
+    API --> RAG & CM & CLM
+    RAG --> VS & LLM & EMB
+    CM & CLM --> DB
+    API --> FS
+```
+
+---
+
+## Three Role-Based Dashboards
+
+### 1. Judge Dashboard
+| Feature | Description |
+|---------|-------------|
+| **Today's Docket** | Cases scheduled for today with status badges |
+| **Case Manager** | Full case lifecycle: parties, dates, status, hearings |
+| **Law Search + Summarizer** | Search any Indian law → get IRAC summary with bullet points |
+| **Case History Retrieval** | Who won, why, reasoning — for any act/section |
+| **Case Documents** | Upload/view case papers, orders, applications |
+| **Case-Specific RAG** | Ask AI about a specific case using its uploaded documents |
+| **Notes & Orders** | Draft notes and orders with AI assistance |
+
+### 2. Advocate Dashboard
+| Feature | Description |
+|---------|-------------|
+| **Client Manager** | Add clients, track their cases, contact info |
+| **Payment Tracker** | Record fees, payments, outstanding balances |
+| **Case Research** | Find supporting arguments, precedents, counter-arguments |
+| **Argument Builder** | AI analyzes case papers and builds structured arguments |
+| **Section Analysis** | Deep-dive into specific sections with case history |
+| **Case Paper RAG** | Upload opposing party's papers → AI finds weaknesses |
+| **My Cases** | All active cases with status, next hearing, client |
+
+### 3. Public Dashboard
+| Feature | Description |
+|---------|-------------|
+| **Situation Describer** | Describe your problem in plain language |
+| **Evidence Upload** | Upload documents, photos, witness statements |
+| **AI Legal Guidance** | Get plain-language explanation of your rights |
+| **Relevant Laws** | See which laws apply to your situation |
+| **Case History** | Similar past cases and their outcomes |
+| **Next Steps** | Practical advice — what to do next, where to go |
+
+---
+
+## Proposed Changes
+
+### Cleanup — Remove Stale Files
+
+#### [DELETE] implementation_plan.md.resolved
+#### [DELETE] walkthrough.md.resolved
+#### [DELETE] tests/test_output.txt
+
+---
+
+### Database — New Tables
+
+#### [MODIFY] [database.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/database.py)
+
+Add new tables:
+
+| Table | Purpose | Key Columns |
+|-------|---------|-------------|
+| `cases` | Case management | case_number, title, parties, court, judge, status, next_hearing, created_at |
+| `hearings` | Hearing schedule | case_id, date, time, court_room, status, notes |
+| `case_documents` | Per-case documents | case_id, doc_id, filename, doc_type, file_path |
+| `clients` | Advocate's clients | name, phone, email, address, notes |
+| `client_cases` | Client ↔ Case link | client_id, case_id, role (petitioner/respondent) |
+| `payments` | Fee tracking | client_id, case_id, amount, date, status, description |
+| `case_notes` | Judge/advocate notes | case_id, user_role, content, created_at |
+
+---
+
+### Data Models — New Schemas
+
+#### [MODIFY] [models.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/models.py)
+
+Add Pydantic models for: `CaseCreate`, `CaseUpdate`, `CaseResponse`, `HearingCreate`, `ClientCreate`, `PaymentCreate`, `CaseNoteCreate`, `CaseDocumentResponse`.
+
+---
+
+### RAG Engine — Enhanced Analysis
+
+#### [MODIFY] [rag_engine.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/rag_engine.py)
+
+- **`case_specific_rag()`** — Analyze a specific case's documents via RAG
+- **`argument_builder()`** — Find supporting/opposing precedents for a position
+- **`situation_analyzer()`** — Public can describe a situation, AI identifies applicable laws
+
+#### [MODIFY] [llm_client.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/llm_client.py)
+
+- Add role-specific system prompts (Judge gets bench-ready, Advocate gets argument-focused, Public gets plain language)
+- Add structured summarization prompt for law sections
+
+---
+
+### API Routes — New Endpoints
+
+#### [NEW] [cases.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/routes/cases.py)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/cases` | Create a new case |
+| `GET` | `/api/cases` | List all cases (with filters) |
+| `GET` | `/api/cases/{id}` | Get case details |
+| `PUT` | `/api/cases/{id}` | Update case status/details |
+| `DELETE` | `/api/cases/{id}` | Delete a case |
+| `POST` | `/api/cases/{id}/documents` | Upload case document |
+| `GET` | `/api/cases/{id}/documents` | List case documents |
+| `POST` | `/api/cases/{id}/notes` | Add a case note |
+| `GET` | `/api/cases/{id}/notes` | Get case notes |
+| `POST` | `/api/cases/{id}/rag` | RAG query on case documents |
+
+#### [NEW] [clients.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/routes/clients.py)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/clients` | Add a client |
+| `GET` | `/api/clients` | List clients |
+| `GET` | `/api/clients/{id}` | Client details with cases |
+| `PUT` | `/api/clients/{id}` | Update client info |
+| `DELETE` | `/api/clients/{id}` | Remove a client |
+
+#### [NEW] [payments.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/routes/payments.py)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/payments` | Record a payment |
+| `GET` | `/api/payments` | List payments (with filters) |
+| `GET` | `/api/payments/summary` | Payment summary / outstanding |
+
+#### [MODIFY] [query.py](file:///c:/Users/ROG/Downloads/legal_ai_assistant/backend/routes/query.py)
+
+- Add `/api/query/summarize-law` — Structured law summary with subheadings
+- Add `/api/query/case-history` — Case history for a specific section
+- Add `/api/query/situation` — Public situation analysis
+- Add `/api/query/arguments` — Advocate argument builder
+
+---
+
+### Frontend — Complete Redesign
+
+#### [MODIFY] [index.html](file:///c:/Users/ROG/Downloads/legal_ai_assistant/static/index.html)
+
+- Role selection screen (Judge / Advocate / Public) with cards
+- Role-specific dashboard layouts
+- Case management UI components
+- Client management forms
+- Payment tracking interface
+
+#### [MODIFY] [styles.css](file:///c:/Users/ROG/Downloads/legal_ai_assistant/static/css/styles.css)
+
+- Role-specific color accents (Gold=Judge, Teal=Advocate, Blue=Public)
+- Dashboard grid layouts
+- Card components for cases, clients, payments
+- Data tables with sorting
+- Modal dialogs for forms
+- Status badges, progress indicators
+
+#### [MODIFY] [app.js](file:///c:/Users/ROG/Downloads/legal_ai_assistant/static/js/app.js)
+
+- Role selection and routing logic
+- Judge dashboard: docket, case manager, law search, RAG
+- Advocate dashboard: client list, case research, argument builder, payments
+- Public dashboard: situation form, evidence upload, law finder
+- Shared: AI chat, document upload, search
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+python tests/test_all.py  # Updated with new endpoint tests
+```
+
+### Manual Verification
+- Open http://localhost:8000 in Brave
+- Test each role dashboard
+- Create cases, add documents, run case-specific RAG
+- Test client/payment management for advocate
+- Test public situation analysis with document uploads

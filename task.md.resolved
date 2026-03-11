@@ -1,0 +1,48 @@
+# LegalRAG v2.0 — Role-Based Legal Platform
+
+## Phase 0: Cleanup
+- [ ] Delete stale files: [implementation_plan.md.resolved](file:///c:/Users/ROG/Downloads/legal_ai_assistant/implementation_plan.md.resolved), [walkthrough.md.resolved](file:///c:/Users/ROG/Downloads/legal_ai_assistant/walkthrough.md.resolved), `tests/test_output.txt`
+- [ ] Clean up `__pycache__` directories
+
+## Phase 1: Database & Models
+- [ ] Add new tables: cases, hearings, case_documents, clients, client_cases, payments, case_notes
+- [ ] Add new Pydantic models for all entities
+- [ ] Test database initialization
+
+## Phase 2: Backend Routes
+- [ ] Case management API (`/api/cases` — CRUD + documents + notes + case-specific RAG)
+- [ ] Client management API (`/api/clients` — CRUD)
+- [ ] Payment tracking API (`/api/payments` — create/list/summary)
+- [ ] Enhanced query routes (summarize-law, case-history, situation, arguments)
+
+## Phase 3: Enhanced RAG
+- [x] Case-specific RAG (query against a specific case's documents)
+- [x] Argument builder (find supporting/opposing precedents)
+- [x] Situation analyzer (public describes problem → AI identifies laws)
+- [x] Law summarizer (structured output with subheadings and bullet points)
+- [x] Role-specific LLM prompts
+- [x] Online Document Fetcher (IndianKanoon scraping + LLM metadata parsing)
+
+## Phase 4: Frontend — Complete Redesign
+- [x] Role selection landing page (Judge / Advocate / Public)
+- [x] Judge Dashboard (docket, case manager, law search, case RAG, notes)
+- [x] Advocate Dashboard (clients, cases, research, arguments, payments)
+- [x] Public Dashboard (situation form, evidence upload, guidance)
+- [x] Shared components (AI chat, document viewer, search, toast notifications)
+- [x] Responsive dark-theme CSS with role-specific accents
+
+## Phase 5: Verification
+- [ ] Update test suite for all new endpoints
+- [ ] Run full API test (all endpoints 200 OK)
+- [ ] Manual UI test in Brave browser
+- [ ] Push to GitHub
+
+## Phase 6: User Refinements
+- [x] Replace "Priya Sharma" mock case with a different genre
+- [x] Add admissibility toggle for Judges on Evidence/Documents
+- [x] Update Corpus Ingestion Progress to 100% (6450 laws)
+
+## Phase 7: Real-World Ingestion & Deduplication
+- [ ] Remove all synthetic/fake laws from the Vector Store
+- [ ] Enhance IndiaCode crawler to rigorously deduplicate and check for updates
+- [ ] Trigger holistic background monitor for all genuine Central and State Acts
