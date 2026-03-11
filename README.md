@@ -142,7 +142,7 @@ Edit `.env` to customize:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OLLAMA_MODEL` | LLM model name | `mistral` |
+| `OLLAMA_MODEL` | LLM model name | `deepseek` |
 | `EMBEDDING_MODEL` | Sentence Transformers model | `all-MiniLM-L6-v2` |
 | `DATABASE_URL` | SQLite connection string | `sqlite+aiosqlite:///./legal_ai.db` |
 
